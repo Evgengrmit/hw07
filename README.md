@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/Evgengrmit/hw05.svg?branch=master)](https://travis-ci.org/Evgengrmit/hw05)
 [![Build Status](https://travis-ci.com/Evgengrmit/hw05.svg?branch=master)](https://travis-ci.com/Evgengrmit/hw05)
+[![Coverage Status](https://coveralls.io/repos/github/Evgengrmit/hw05/badge.svg?branch=master)](https://coveralls.io/github/Evgengrmit/hw05?branch=master)
 ## Homework V
 
 ### Задание
@@ -245,7 +246,53 @@ Detected repository as Evgengrmit/hw05, is this correct? |yes| y
 Evgengrmit/hw05: enabled :)
 ```
 4. Настройте [Coveralls.io](https://coveralls.io/).
+Обновление `CMakeLists.txt`
+```sh
+% sed -i "" '/add_executable(check ${${PROJECT_NAME}_TEST_SOURCES})/a\
+target_compile_options(check PRIVATE --coverage)
+target_link_libraries(check PRIVATE account transaction gtest_main gmock_main  --coverage)
+' CMakeLists.txt
+```
+Перепишем сборочную процедуру на **TravisCI**.
+```sh
+% cat > .travis.yml <<EOF
+language: cpp
+os:
+  - osx
+jobs:
+  include:
+  - name: "Link an test"
+    script:
+    - cmake -H. -B_build -DBUILD_TESTS=ON
+    - cmake --build _build
+    - cmake --build _build --target test
+    - _build/check
+    - cmake --build _build --target test -- ARGS=--verbose
+  - name: "Coveralls.io"
+    before_install:
+    - pyenv rehash
+    - pip install cpp-coveralls
+    - pyenv rehash
+    script:
+    - cmake -H. -B_build -DBUILD_TESTS=ON
+    - cmake --build _build
+    - ./_build/check
+    after_success:
+    - coveralls --root . -E ".*gtest.*" -E ".*CMakeFiles.*"
 
+addons:
+  apt:
+    packages:
+      - cmake
+      - cmake-data
+
+EOF
+```
+Проверка `.travis.yml` на ошибки
+```sh
+% travis lint
+Hooray, .travis.yml looks valid :)
+```
 ## Links
 
 - [C++ CI: Travis, CMake, GTest, Coveralls & Appveyor](http://david-grs.github.io/cpp-clang-travis-cmake-gtest-coveralls-appveyor/)
