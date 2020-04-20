@@ -12,10 +12,6 @@ jobs:
     - cmake --build _build --target test -- ARGS=--verbose
   - name: "Coveralls.io"
     before_install:
-    
-    - eval "$(pyenv init -)"
-    - pyenv install 2.7.6
-    - pyenv global 2.7.6
     - pyenv rehash
     - pip install cpp-coveralls
     - pyenv rehash
