@@ -1,0 +1,2 @@
+/Library/Developer/CommandLineTools/usr/bin/ar qc libaccount.a  CMakeFiles/account.dir/banking/Account.cpp.o
+/Library/Developer/CommandLineTools/usr/bin/ranlib libaccount.a

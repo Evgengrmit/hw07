@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/c++   -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/check.dir/tests/test1.cpp.o CMakeFiles/check.dir/tests/test2.cpp.o  -o check  libaccount.a libtransaction.a lib/libgtest_main.a lib/libgmock_main.a lib/libgmock.a lib/libgtest.a 

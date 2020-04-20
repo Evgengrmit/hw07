@@ -18,7 +18,7 @@ jobs:
     script:
     - cmake -H. -B_build -DBUILD_TESTS=ON
     - cmake --build _build
-    - ./_build --enable-gcov && make && make check
+    - ./_build/check --enable-gcov && make && make check
     after_success:
     - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
 
