@@ -1,0 +1,19 @@
+language: cpp
+os:
+  - osx
+jobs:
+  include:
+  - name: "Link an test"
+    script:
+    - cmake -H. -B_build -DBUILD_TESTS=ON
+    - cmake --build _build
+    - cmake --build _build --target test
+    - _build/check
+    - cmake --build _build --target test -- ARGS=--verbose
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+    packages:
+      - cmake
+      - cmake-data

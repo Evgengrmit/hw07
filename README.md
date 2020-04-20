@@ -1,154 +1,247 @@
-## Laboratory work V
+## Homework V
 
-<a href="https://yandex.ru/efir/?stream_id=vQw_LH0UfN6I"><img src="https://raw.githubusercontent.com/tp-labs/lab05/master/preview.png" width="640"/></a>
-
-Данная лабораторная работа посвещена изучению фреймворков для тестирования на примере **GTest**
-
+### Задание
+1. Создайте `CMakeList.txt` для библиотеки *banking*.
+Настройка git-репозитория hw04 для работы
 ```sh
-$ open https://github.com/google/googletest
+% git remote remove origin
+% hub create
+Updating origin
+https://github.com/Evgengrmit/hw05
+% git push -u origin master
 ```
-
-## Tasks
-
-- [ ] 1. Создать публичный репозиторий с названием **lab05** на сервисе **GitHub**
-- [ ] 2. Выполнить инструкцию учебного материала
-- [ ] 3. Ознакомиться со ссылками учебного материала
-- [ ] 4. Составить отчет и отправить ссылку личным сообщением в **Slack**
-
-## Tutorial
-
+Cоздание `CMakeLists.txt`
 ```sh
-$ export GITHUB_USERNAME=<имя_пользователя>
-$ alias gsed=sed # for *-nix system
+% cat >> CMakeLists.txt <<EOF
+cmake_minimum_required(VERSION 3.10)
+project(banking)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_library(account STATIC banking/Account.cpp)
+target_include_directories(account
+ PUBLIC \${CMAKE_CURRENT_SOURCE_DIR}/banking)
+
+add_library(transaction STATIC banking/Transaction.cpp)
+target_include_directories(account
+ PUBLIC \${CMAKE_CURRENT_SOURCE_DIR}/banking)
+ target_link_libraries(transaction account)
+EOF
 ```
-
+Подключение к репозиторию подмодуля **Google Test**, выбор версии с помощью переключения ветки
 ```sh
-$ cd ${GITHUB_USERNAME}/workspace
-$ pushd .
-$ source scripts/activate
+% mkdir third-party
+# Клонирование репозитория Google к своему репозиторию как подмодуль(проект в проекте)
+% git submodule add https://github.com/google/googletest third-party/gtest
+Cloning into '/Users/evgengrmit/Evgengrmit/workspace/projects/hw05/third-party/gtest'...
+remote: Enumerating objects: 20049, done.
+remote: Total 20049 (delta 0), reused 0 (delta 0), pack-reused 20049
+Receiving objects: 100% (20049/20049), 7.33 MiB | 1.01 MiB/s, done.
+Resolving deltas: 100% (14816/14816), done.
+% cd third-party/gtest && git checkout release-1.10.0 && cd ../..
+% git add third-party/gtest
 ```
-
+Модифицируем CMakeList.txt
 ```sh
-$ git clone https://github.com/${GITHUB_USERNAME}/lab04 projects/lab05
-$ cd projects/lab05
-$ git remote remove origin
-$ git remote add origin https://github.com/${GITHUB_USERNAME}/lab05
-```
-
-```sh
-$ mkdir third-party
-$ git submodule add https://github.com/google/googletest third-party/gtest
-$ cd third-party/gtest && git checkout release-1.8.1 && cd ../..
-$ git add third-party/gtest
-$ git commit -m"added gtest framework"
-```
-
-```sh
-$ gsed -i '/option(BUILD_EXAMPLES "Build examples" OFF)/a\
+# Вставка текста в файл после строки
+# Добавление опции для сборки тестов
+% sed -i "" '/set(CMAKE_CXX_STANDARD_REQUIRED ON)/a\
 option(BUILD_TESTS "Build tests" OFF)
 ' CMakeLists.txt
-$ cat >> CMakeLists.txt <<EOF
+# Вставка в конец файла
+# Добавление сборки тестов
+% cat >> CMakeLists.txt <<EOF
 
 if(BUILD_TESTS)
+  # Включить поддержку тестирования:
   enable_testing()
   add_subdirectory(third-party/gtest)
+  # Создание списка файлов, соответствующих выражению и сохранение его в переменную
   file(GLOB \${PROJECT_NAME}_TEST_SOURCES tests/*.cpp)
   add_executable(check \${\${PROJECT_NAME}_TEST_SOURCES})
-  target_link_libraries(check \${PROJECT_NAME} gtest_main)
+  target_link_libraries(check account transaction gtest_main gmock_main)
+  # Добавление тестов к проекту
   add_test(NAME check COMMAND check)
 endif()
 EOF
 ```
-
-```sh
-$ mkdir tests
-$ cat > tests/test1.cpp <<EOF
-#include <print.hpp>
-
-#include <gtest/gtest.h>
-
-TEST(Print, InFileStream)
-{
-  std::string filepath = "file.txt";
-  std::string text = "hello";
-  std::ofstream out{filepath};
-
-  print(text, out);
-  out.close();
-
-  std::string result;
-  std::ifstream in{filepath};
-  in >> result;
-
-  EXPECT_EQ(result, text);
-}
-EOF
-```
-
-```sh
-$ cmake -H. -B_build -DBUILD_TESTS=ON
-$ cmake --build _build
-$ cmake --build _build --target test
-```
-
-```sh
-$ _build/check
-$ cmake --build _build --target test -- ARGS=--verbose
-```
-
-```sh
-$ gsed -i 's/lab04/lab05/g' README.md
-$ gsed -i 's/\(DCMAKE_INSTALL_PREFIX=_install\)/\1 -DBUILD_TESTS=ON/' .travis.yml
-$ gsed -i '/cmake --build _build --target install/a\
-- cmake --build _build --target test -- ARGS=--verbose
-' .travis.yml
-```
-
-```sh
-$ travis lint
-```
-
-```sh
-$ git add .travis.yml
-$ git add tests
-$ git add -p
-$ git commit -m"added tests"
-$ git push origin master
-```
-
-```sh
-$ travis login --auto
-$ travis enable
-```
-
-```sh
-$ mkdir artifacts
-$ sleep 20s && gnome-screenshot --file artifacts/screenshot.png
-# for macOS: $ screencapture -T 20 artifacts/screenshot.png
-# open https://github.com/${GITHUB_USERNAME}/lab05
-```
-
-## Report
-
-```sh
-$ popd
-$ export LAB_NUMBER=05
-$ git clone https://github.com/tp-labs/lab${LAB_NUMBER} tasks/lab${LAB_NUMBER}
-$ mkdir reports/lab${LAB_NUMBER}
-$ cp tasks/lab${LAB_NUMBER}/README.md reports/lab${LAB_NUMBER}/REPORT.md
-$ cd reports/lab${LAB_NUMBER}
-$ edit REPORT.md
-$ gist REPORT.md
-```
-
-## Homework
-
-### Задание
-1. Создайте `CMakeList.txt` для библиотеки *banking*.
 2. Создайте модульные тесты на классы `Transaction` и `Account`.
     * Используйте mock-объекты.
     * Покрытие кода должно составлять 100%.
+Создание тестов для класса `Account`
+```sh
+% cat >> tests/test1.cpp <<EOF
+#include <Account.h>
+#include <gtest/gtest.h>
+// Тест на проверку правильности конструктора
+TEST(Account, Constructor)
+{
+Account a(2,300);
+
+EXPECT_EQ(a.id(),2);
+EXPECT_EQ(a.GetBalance(),300);
+}
+// Тест на проверку правильность изменения баланса
+TEST(Account, ChangeBalance)
+{
+  Account a(2,300);
+  a.Lock();
+  a.ChangeBalance(100);
+  EXPECT_EQ(a.GetBalance(),400);
+}
+// Тест на проверку состояния аккаунта(открыт/закрыт)
+TEST(Account, Lock)
+{
+  Account a(2,300);
+  a.Lock();
+  a.ChangeBalance(100);
+  a.Unlock();
+  EXPECT_EQ(a.GetBalance(),400);
+}
+EOF
+```
+Создание тестов для класса `Transaction`  && применение mock-объектов
+```sh
+% cat >> tests/test2.cpp <<EOF
+//
+// Created by Евгений Григорьев on 20.04.2020.
+//
+#include <Account.h>
+#include <Transaction.h>
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+// Создание mock-класса
+class MockAccount : public Account {
+public:
+  MockAccount(){};
+  MOCK_METHOD(int, GetBalance, (), (const, override));
+  MOCK_METHOD(int, id, (), (const));
+};
+// Пример использования mock-объектов
+TEST(Transaction, MakeTransaction) {
+
+  MockAccount from;
+  MockAccount to;
+  Transaction transaction1;
+
+  // Установка поведения
+  EXPECT_CALL(from, id()).WillOnce(testing::Return(1));
+  EXPECT_CALL(from, GetBalance()).WillOnce(testing::Return(1000));
+  EXPECT_CALL(to, id()).WillOnce(testing::Return(2));
+  EXPECT_CALL(to, GetBalance()).WillOnce(testing::Return(100));
+  EXPECT_TRUE(transaction1.Make(Account(from.id(), from.GetBalance()),
+                                Account(to.id(), to.GetBalance()), 500));
+}
+// Проценты за перевод
+TEST(Transaction, Fee){
+  Transaction transaction1;
+  EXPECT_EQ(transaction1.fee(),1);
+  transaction1.set_fee(3);
+  EXPECT_EQ(transaction1.fee(),3);
+  EXPECT_TRUE(transaction1.Make(Account(3, 1000),
+                                Account(4,100), 500));
+}
+EOF
+```
+Сборка проекта
+```sh
+# Генерация файлов для сборки с тестом
+$ cmake -H. -B_build -DBUILD_TESTS=ON
+-- The C compiler identification is AppleClang 11.0.3.11030032
+-- The CXX compiler identification is AppleClang 11.0.3.11030032
+...
+-- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw05/_build
+########################################
+$ cmake --build _build
+Scanning dependencies of target account
+[  6%] Building CXX object CMakeFiles/account.dir/banking/Account.cpp.o
+...
+[100%] Linking CXX executable check
+[100%] Built target check
+$ cmake --build _build --target test
+Running tests...
+Test project /Users/evgengrmit/Evgengrmit/workspace/projects/hw05/_build
+    Start 1: check
+1/1 Test #1: check ............................   Passed    0.30 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.30 sec
+```
+Запуск тестов
+```sh
+$ _build/check
+Running main() from /Users/evgengrmit/Evgengrmit/workspace/projects/hw05/third-party/gtest/googletest/src/gtest_main.cc
+[==========] Running 5 tests from 2 test suites.
+[----------] Global test environment set-up.
+[----------] 3 tests from Account
+[ RUN      ] Account.Constructor
+[       OK ] Account.Constructor (0 ms)
+[ RUN      ] Account.ChangeBalance
+[       OK ] Account.ChangeBalance (0 ms)
+[ RUN      ] Account.Lock
+[       OK ] Account.Lock (0 ms)
+[----------] 3 tests from Account (0 ms total)
+
+[----------] 2 tests from Transaction
+[ RUN      ] Transaction.MakeTransaction
+1 send to 2 $500
+Balance 1 is 499
+Balance 2 is 600
+[       OK ] Transaction.MakeTransaction (1 ms)
+[ RUN      ] Transaction.Fee
+3 send to 4 $500
+Balance 3 is 497
+Balance 4 is 600
+[       OK ] Transaction.Fee (0 ms)
+[----------] 2 tests from Transaction (1 ms total)
+
+[----------] Global test environment tear-down
+[==========] 5 tests from 2 test suites ran. (1 ms total)
+[  PASSED  ] 5 tests.
+# Запуск тестов с подробным выводом информации
+$ cmake --build _build --target test -- ARGS=--verbose
+Running tests...
+...
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.01 sec
+```
 3. Настройте сборочную процедуру на **TravisCI**.
+```sh
+% cat > .travis.yml <<EOF
+language: cpp
+os:
+  - osx
+jobs:
+  include:
+  - name: "Link an test"
+    script:
+    - cmake -H. -B_build -DBUILD_TESTS=ON
+    - cmake --build _build
+    - cmake --build _build --target test
+    - _build/check
+    - cmake --build _build --target test -- ARGS=--verbose
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+    packages:
+      - cmake
+      - cmake-data
+EOF
+```
+Проверка `.travis.yml` на ошибки
+```sh
+% travis lint
+Hooray, .travis.yml looks valid :)
+% travis login --auto
+Successfully logged in as Evgengrmit!
+% travis enable
+Detected repository as Evgengrmit/hw05, is this correct? |yes| y
+Evgengrmit/hw05: enabled :)
+```
 4. Настройте [Coveralls.io](https://coveralls.io/).
 
 ## Links

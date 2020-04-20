@@ -22,7 +22,7 @@ Transaction::Transaction() : fee_(1) {}
 
 Transaction::~Transaction() {}
 
-bool Transaction::Make(Account& from, Account& to, int sum) {
+bool Transaction::Make(Account from, Account to, int sum) {
   if (from.id() == to.id()) throw std::logic_error("invalid action");
 
   if (sum < 0) throw std::invalid_argument("sum can't be negative");
@@ -36,7 +36,7 @@ bool Transaction::Make(Account& from, Account& to, int sum) {
 
   Credit(to, sum);
 
-  bool success = Debit(to, sum + fee_);
+  bool success = Debit(from, sum + fee_);
   if (!success) to.ChangeBalance(-sum);
 
   SaveToDataBase(from, to, sum);
