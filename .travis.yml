@@ -16,7 +16,7 @@ jobs:
     - pip install cpp-coveralls
     - pyenv rehash
     script:
-    - cmake -H. -B_build -DBUILD_TESTS=ON
+    - cmake -H. -B_build -DBUILD_TESTS=ON -DCOVERAGE=1
     - cmake --build _build
     - ./_build/check
     after_success:
