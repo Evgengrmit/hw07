@@ -10,6 +10,23 @@ jobs:
     - cmake --build _build --target test
     - _build/check
     - cmake --build _build --target test -- ARGS=--verbose
+  - name: "Coveralls.io"
+    before_install:
+    - brew update
+    - brew install pyenv
+    - eval "$(pyenv init -)"
+    - pyenv install 2.7.6
+    - pyenv global 2.7.6
+    - pyenv rehash
+    - pip install cpp-coveralls
+    - pyenv rehash
+    script:
+    - cmake -H. -B_build -DBUILD_TESTS=ON
+    - cmake --build _build
+    - _build/check --enable-gcov && make && make check
+    after_success:
+    - coveralls --exclude lib --exclude tests --gcov-options '\-lp'
+
 addons:
   apt:
     sources:
