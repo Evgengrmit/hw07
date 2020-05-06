@@ -7,6 +7,3 @@ configuration: Release
 build_script:
   - cmd: cmake -H. -B_build -DBUILD_TESTS=ON
   - cmd: cmake --build _build
-  - cmd: cmake --build _build --config Debug --target test
-  - cmd: _build/check
-  - cmd: cmake --build _build --target test -- ARGS=--verbose
