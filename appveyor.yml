@@ -1,0 +1,12 @@
+image: Visual Studio 2019
+platform:
+  - x86
+  - x64
+configuration: Release
+
+build_script:
+  - cmd: cmake -H. -B_build -DBUILD_TESTS=ON
+  - cmd: cmake --build _build
+  - cmd: cmake --build _build --target test
+  - cmd: _build/check
+  - cmd: cmake --build _build --target test -- ARGS=--verbose

@@ -3,7 +3,7 @@ os:
   - osx
 jobs:
   include:
-  - name: "Link an test"
+  - name: "Link and test"
     script:
     - cmake -H. -B_build -DBUILD_TESTS=ON
     - cmake --build _build
@@ -27,4 +27,3 @@ addons:
     packages:
       - cmake
       - cmake-data
-      - polly
