@@ -27,3 +27,4 @@ addons:
     packages:
       - cmake
       - cmake-data
+      - polly

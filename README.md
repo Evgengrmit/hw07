@@ -1,320 +1,150 @@
-[![Build Status](https://travis-ci.org/Evgengrmit/hw05.svg?branch=master)](https://travis-ci.org/Evgengrmit/hw05)
-[![Build Status](https://travis-ci.com/Evgengrmit/hw05.svg?branch=master)](https://travis-ci.com/Evgengrmit/hw05)
-[![Coverage Status](https://coveralls.io/repos/github/Evgengrmit/hw05/badge.svg?branch=master)](https://coveralls.io/github/Evgengrmit/hw05?branch=master)
-## Homework V
+[![Build Status](https://travis-ci.com/Evgengrmit/hw07.svg?branch=master)](https://travis-ci.com/Evgengrmit/hw07)
+[![Build status](https://ci.appveyor.com/api/projects/status/4e9t9x09lm60mb0t/branch/master?svg=true)](https://ci.appveyor.com/project/Evgengrmit/hw07/branch/master)
+[![Coverage Status](https://coveralls.io/repos/github/Evgengrmit/hw07/badge.svg?branch=master)](https://coveralls.io/github/Evgengrmit/hw07?branch=master)
+## Homework VII
 
 ### Задание
-1. Создайте `CMakeList.txt` для библиотеки *banking*.
-Настройка git-репозитория hw04 для работы
+Создадим настройки менеджера пакетов **Hunter** для репозитория с ДЗ № 5
+Настройка git-репозитория **hw07** для работы
 ```sh
+% git clone https://github.com/${GITHUB_USERNAME}/hw05 hw07
+% cd hw07
 % git remote remove origin
-% hub create
-Updating origin
-https://github.com/Evgengrmit/hw05
-% git push -u origin master
+% git remote add origin https://github.com/${GITHUB_USERNAME}/lab07
 ```
-Cоздание `CMakeLists.txt`
+Скачивание и подключение модуля `HunterGate`
 ```sh
-% cat >> CMakeLists.txt <<EOF
-cmake_minimum_required(VERSION 3.10)
-project(banking)
+% mkdir -p cmake # Создание директории где будут храниться файлы Hunter
+# Скачивание данных из файла в удаленном репозитории и их запись в файл HunterGate.cmake
+% wget https://raw.githubusercontent.com/cpp-pm/gate/master/cmake/HunterGate.cmake -O cmake/HunterGate.cmake
+--2020-05-06 17:48:12--  https://raw.githubusercontent.com/cpp-pm/gate/master/cmake/HunterGate.cmake
+Распознаётся raw.githubusercontent.com (raw.githubusercontent.com)… 151.101.112.133
+Подключение к raw.githubusercontent.com (raw.githubusercontent.com)|151.101.112.133|:443... соединение установлено.
+HTTP-запрос отправлен. Ожидание ответа… 200 OK
+Длина: 17070 (17K) [text/plain]
+Сохранение в: «cmake/HunterGate.cmake»
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+cmake/HunterGate.cmake   100%[===============================>]  16,67K  --.-KB/s    за 0,04s   
 
-add_library(account STATIC banking/Account.cpp)
-target_include_directories(account
- PUBLIC \${CMAKE_CURRENT_SOURCE_DIR}/banking)
+2020-05-06 17:48:12 (436 KB/s) - «cmake/HunterGate.cmake» сохранён [17070/17070]
 
-add_library(transaction STATIC banking/Transaction.cpp)
-target_include_directories(account
- PUBLIC \${CMAKE_CURRENT_SOURCE_DIR}/banking)
- target_link_libraries(transaction account)
-EOF
-```
-Подключение к репозиторию подмодуля **Google Test**, выбор версии с помощью переключения ветки
-```sh
-% mkdir third-party
-# Клонирование репозитория Google к своему репозиторию как подмодуль(проект в проекте)
-% git submodule add https://github.com/google/googletest third-party/gtest
-Cloning into '/Users/evgengrmit/Evgengrmit/workspace/projects/hw05/third-party/gtest'...
-remote: Enumerating objects: 20049, done.
-remote: Total 20049 (delta 0), reused 0 (delta 0), pack-reused 20049
-Receiving objects: 100% (20049/20049), 7.33 MiB | 1.01 MiB/s, done.
-Resolving deltas: 100% (14816/14816), done.
-% cd third-party/gtest && git checkout release-1.10.0 && cd ../..
-% git add third-party/gtest
-```
-Модифицируем CMakeList.txt
-```sh
-# Вставка текста в файл после строки
-# Добавление опции для сборки тестов
-% sed -i "" '/set(CMAKE_CXX_STANDARD_REQUIRED ON)/a\
-option(BUILD_TESTS "Build tests" OFF)
+
+# Добавление HunterGate к CMake
+% gsed -i "" '/cmake_minimum_required(VERSION 3.10)/a\
+
+include("cmake/HunterGate.cmake")
+HunterGate(
+    URL "https:\//github.com/cpp-pm/hunter/archive/v0.23.251.tar.gz"
+    SHA1 "5659b15dc0884d4b03dbd95710e6a1fa0fc3258d"
+)
 ' CMakeLists.txt
-# Вставка в конец файла
-# Добавление сборки тестов
-% cat >> CMakeLists.txt <<EOF
-
-if(BUILD_TESTS)
-  # Включить поддержку тестирования:
-  enable_testing()
-  add_subdirectory(third-party/gtest)
-  # Создание списка файлов, соответствующих выражению и сохранение его в переменную
-  file(GLOB \${PROJECT_NAME}_TEST_SOURCES tests/*.cpp)
-  add_executable(check \${\${PROJECT_NAME}_TEST_SOURCES})
-  target_link_libraries(check account transaction gtest_main gmock_main)
-  # Добавление тестов к проекту
-  add_test(NAME check COMMAND check)
-endif()
-EOF
 ```
-2. Создайте модульные тесты на классы `Transaction` и `Account`.
-    * Используйте mock-объекты.
-    * Покрытие кода должно составлять 100%.
-Создание тестов для класса `Account`
+Теперь не нужно скачивать **GTest** самостоятельно. **Hunter** сам подтянет добавленные с помощью функции `hunter_add_package`.
 ```sh
-% cat >> tests/test1.cpp <<EOF
-#include <Account.h>
-#include <gtest/gtest.h>
-// Тест на проверку правильности конструктора
-TEST(Account, Constructor)
-{
-Account a(2,300);
+# Удаление подмодуля с GTest
+% git rm -rf third-party/gtest
+rm 'third-party/gtest'
+# Добавление через hunter пакета gtest и его поиск
+% gsed -i "" '/option(BUILD_TESTS "Build tests" OFF)/a\
 
-EXPECT_EQ(a.id(),2);
-EXPECT_EQ(a.GetBalance(),300);
-}
-// Тест на проверку правильность изменения баланса
-TEST(Account, ChangeBalance)
-{
-  Account a(2,300);
-  a.Lock();
-  a.ChangeBalance(100);
-  EXPECT_EQ(a.GetBalance(),400);
-}
-// Тест на проверку состояния аккаунта(открыт/закрыт)
-TEST(Account, Lock)
-{
-  Account a(2,300);
-  a.Lock();
-  a.ChangeBalance(100);
-  a.Unlock();
-  EXPECT_EQ(a.GetBalance(),400);
-}
-EOF
+hunter_add_package(GTest)
+find_package(GTest CONFIG REQUIRED)
+' CMakeLists.txt
+# Удаление строки с добавлением поддиректории gtest
+% gsed -i "" 's/add_subdirectory(third-party/gtest)//' CMakeLists.txt
+# Замена обращение к gtest gtest_main на GTest::gtest_main
+% gsed -i "" 's/gtest_main/GTest::gtest_main/' CMakeLists.txt
 ```
-Создание тестов для класса `Transaction`  && применение mock-объектов
+Сборка прокта при помощи **Hunter**.
 ```sh
-% cat >> tests/test2.cpp <<EOF
-//
-// Created by Евгений Григорьев on 20.04.2020.
-//
-#include <Account.h>
-#include <Transaction.h>
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-// Создание mock-класса
-class MockAccount : public Account {
-public:
-  MockAccount(){};
-  MOCK_METHOD(int, GetBalance, (), (const, override));
-  MOCK_METHOD(int, id, (), (const));
-};
-// Пример использования mock-объектов
-TEST(Transaction, MakeTransaction) {
-
-  MockAccount from;
-  MockAccount to;
-  Transaction transaction1;
-
-  // Установка поведения
-  EXPECT_CALL(from, id()).WillOnce(testing::Return(1));
-  EXPECT_CALL(from, GetBalance()).WillOnce(testing::Return(1000));
-  EXPECT_CALL(to, id()).WillOnce(testing::Return(2));
-  EXPECT_CALL(to, GetBalance()).WillOnce(testing::Return(100));
-  EXPECT_TRUE(transaction1.Make(Account(from.id(), from.GetBalance()),
-                                Account(to.id(), to.GetBalance()), 500));
-}
-// Проценты за перевод
-TEST(Transaction, Fee){
-  Transaction transaction1;
-  EXPECT_EQ(transaction1.fee(),1);
-  transaction1.set_fee(3);
-  EXPECT_EQ(transaction1.fee(),3);
-  EXPECT_TRUE(transaction1.Make(Account(3, 1000),
-                                Account(4,100), 500));
-}
-EOF
-```
-Сборка проекта
-```sh
-# Генерация файлов для сборки с тестом
-$ cmake -H. -B_build -DBUILD_TESTS=ON
--- The C compiler identification is AppleClang 11.0.3.11030032
--- The CXX compiler identification is AppleClang 11.0.3.11030032
+# Видим как полключаются пакеты при помощи Hanter'a
+% cmake -H. -B_builds -DBUILD_TESTS=ON
 ...
--- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw05/_build
-########################################
-$ cmake --build _build
+-- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw07/_builds
+% cmake --build _builds
 Scanning dependencies of target account
-[  6%] Building CXX object CMakeFiles/account.dir/banking/Account.cpp.o
-...
+[ 14%] Building CXX object CMakeFiles/account.dir/banking/Account.cpp.o
+[ 28%] Linking CXX static library libaccount.a
+[ 28%] Built target account
+Scanning dependencies of target transaction
+[ 42%] Building CXX object CMakeFiles/transaction.dir/banking/Transaction.cpp.o
+[ 57%] Linking CXX static library libtransaction.a
+[ 57%] Built target transaction
+Scanning dependencies of target check
+[ 71%] Building CXX object CMakeFiles/check.dir/tests/test1.cpp.o
+[ 85%] Building CXX object CMakeFiles/check.dir/tests/test2.cpp.o
 [100%] Linking CXX executable check
 [100%] Built target check
-$ cmake --build _build --target test
+% cmake --build _builds --target test
 Running tests...
-Test project /Users/evgengrmit/Evgengrmit/workspace/projects/hw05/_build
+Test project /Users/evgengrmit/Evgengrmit/workspace/projects/hw07/_builds
     Start 1: check
-1/1 Test #1: check ............................   Passed    0.30 sec
+1/1 Test #1: check ............................   Passed    0.01 sec
 
 100% tests passed, 0 tests failed out of 1
 
-Total Test time (real) =   0.30 sec
+Total Test time (real) =   0.01 sec# Вывод файлов из директории .hunter
+% ls -la $HOME/.hunter
+total 0
+drwxr-xr-x   3 evgengrmit  staff    96  1 апр 19:55 .
+drwxr-xr-x+ 35 evgengrmit  staff  1120  6 май 15:23 ..
+drwxr-xr-x   7 evgengrmit  staff   224  6 май 16:18 _Base
 ```
-Запуск тестов
+Добавление конфигурационного файла в проект, который будет содержать необходимую версию GTest.
 ```sh
-$ _build/check
-Running main() from /Users/evgengrmit/Evgengrmit/workspace/projects/hw05/third-party/gtest/googletest/src/gtest_main.cc
-[==========] Running 5 tests from 2 test suites.
-[----------] Global test environment set-up.
-[----------] 3 tests from Account
-[ RUN      ] Account.Constructor
-[       OK ] Account.Constructor (0 ms)
-[ RUN      ] Account.ChangeBalance
-[       OK ] Account.ChangeBalance (0 ms)
-[ RUN      ] Account.Lock
-[       OK ] Account.Lock (0 ms)
-[----------] 3 tests from Account (0 ms total)
-
-[----------] 2 tests from Transaction
-[ RUN      ] Transaction.MakeTransaction
-1 send to 2 $500
-Balance 1 is 499
-Balance 2 is 600
-[       OK ] Transaction.MakeTransaction (1 ms)
-[ RUN      ] Transaction.Fee
-3 send to 4 $500
-Balance 3 is 497
-Balance 4 is 600
-[       OK ] Transaction.Fee (0 ms)
-[----------] 2 tests from Transaction (1 ms total)
-
-[----------] Global test environment tear-down
-[==========] 5 tests from 2 test suites ran. (1 ms total)
-[  PASSED  ] 5 tests.
-# Запуск тестов с подробным выводом информации
-$ cmake --build _build --target test -- ARGS=--verbose
-Running tests...
+% mkdir cmake/Hunter
+# Установка нужной версии GTest
+% cat > cmake/Hunter/config.cmake <<EOF
+hunter_config(GTest VERSION 1.7.0-hunter-9)
+EOF
+# add LOCAL in HunterGate function
+```
+Добавление подмодуля **polly**, который содержит инструкции для сборки проектов с установленным **Hunter**.
+```sh
+% mkdir tools
+% git submodule add https://github.com/ruslo/polly tools/polly
+% tools/polly/bin/polly.py --test
 ...
-100% tests passed, 0 tests failed out of 1
-
-Total Test time (real) =   0.01 sec
+Generate: 0:00:03.640991s
+Build: 0:00:01.585695s
+Test: 0:00:00.013631s
+-
+Total: 0:00:05.240688s
+-
+SUCCESS
+# Сборка проекта на компиляторе со станартом с++14
+% tools/polly/bin/polly.py --toolchain clang-cxx14
+...
+Generate: 0:00:03.759353s
+Build: 0:00:01.613048s
+-
+Total: 0:00:05.372811s
+-
+SUCCESS
 ```
-3. Настройте сборочную процедуру на **TravisCI**.
+Добавим непрерывную интеграцию с **Appveyor**
+Создание `appveyor.yml`
 ```sh
-% cat > .travis.yml <<EOF
-language: cpp
-os:
-  - osx
-jobs:
-  include:
-  - name: "Link an test"
-    script:
-    - cmake -H. -B_build -DBUILD_TESTS=ON
-    - cmake --build _build
-    - cmake --build _build --target test
-    - _build/check
-    - cmake --build _build --target test -- ARGS=--verbose
-addons:
-  apt:
-    sources:
-      - george-edison55-precise-backports
-    packages:
-      - cmake
-      - cmake-data
+% cat >> appveyor.yml <<EOF
+image: Visual Studio 2019
+platform:
+  - x86
+  - x64
+configuration: Release
+
+build_script:
+  - cmd: cmake -H. -B_build -DBUILD_TESTS=ON
+  - cmd: cmake --build _build
+  - cmd: cmake --build _build --target test
+  - cmd: _build/check
+  - cmd: cmake --build _build --target test -- ARGS=--verbose
 EOF
-```
-Проверка `.travis.yml` на ошибки
-```sh
-% travis lint
-Hooray, .travis.yml looks valid :)
-% travis login --auto
-Successfully logged in as Evgengrmit!
-% travis enable
-Detected repository as Evgengrmit/hw05, is this correct? |yes| y
-Evgengrmit/hw05: enabled :)
-```
-4. Настройте [Coveralls.io](https://coveralls.io/).
-Обновление `CMakeLists.txt`
-```sh
-% sed -i "" '/add_executable(check ${${PROJECT_NAME}_TEST_SOURCES})/a\
-target_compile_options(check PRIVATE --coverage)
-target_link_libraries(check PRIVATE account transaction gtest_main gmock_main  --coverage)
-' CMakeLists.txt
-```
-Перепишем сборочную процедуру на **TravisCI**.
-```sh
-% cat > .travis.yml <<EOF
-language: cpp
-os:
-  - osx
-jobs:
-  include:
-  - name: "Link an test"
-    script:
-    - cmake -H. -B_build -DBUILD_TESTS=ON
-    - cmake --build _build
-    - cmake --build _build --target test
-    - _build/check
-    - cmake --build _build --target test -- ARGS=--verbose
-  - name: "Coveralls.io"
-    before_install:
-    - pyenv rehash
-    - pip install cpp-coveralls
-    - pyenv rehash
-    script:
-    - cmake -H. -B_build -DBUILD_TESTS=ON
-    - cmake --build _build
-    - ./_build/check
-    after_success:
-    - coveralls --root . -E ".*gtest.*" -E ".*CMakeFiles.*"
-
-addons:
-  apt:
-    packages:
-      - cmake
-      - cmake-data
-
-EOF
-```
-Проверка `.travis.yml` на ошибки
-```sh
-% travis lint
-Hooray, .travis.yml looks valid :)
-```
-`add`, `commit`, `push`
-```sh
-% git add .
-% git commit -m "Coveralls"
-[master bd9e4cd] Coveralls
- 2 files changed, 48 insertions(+), 3 deletions(-)
-% git push origin master   
-Enumerating objects: 7, done.
-Counting objects: 100% (7/7), done.
-Delta compression using up to 12 threads
-Compressing objects: 100% (4/4), done.
-Writing objects: 100% (4/4), 791 bytes | 791.00 KiB/s, done.
-Total 4 (delta 3), reused 0 (delta 0)
-remote: Resolving deltas: 100% (3/3), completed with 3 local objects.
-To https://github.com/Evgengrmit/hw05.git
-  9de08f9..bd9e4cd  master -> master
 ```
 ## Links
 
-- [C++ CI: Travis, CMake, GTest, Coveralls & Appveyor](http://david-grs.github.io/cpp-clang-travis-cmake-gtest-coveralls-appveyor/)
-- [Boost.Tests](http://www.boost.org/doc/libs/1_63_0/libs/test/doc/html/)
-- [Catch](https://github.com/catchorg/Catch2)
+- [Create Hunter package](https://docs.hunter.sh/en/latest/creating-new/create.html)
+- [Custom Hunter config](https://github.com/ruslo/hunter/wiki/example.custom.config.id)
+- [Polly](https://github.com/ruslo/polly)
 
 ```
 Copyright (c) 2015-2020 The ISC Authors
